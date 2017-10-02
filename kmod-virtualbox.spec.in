@@ -1,0 +1,131 @@
+# define driver name, version and release
+%define		drvname	virtualbox
+%define		drvver	@VERSION@
+%define		drvrel	1.mga6
+
+# define core kernel version we build against
+%define 	kernver		@KERNVER@
+%define		kernrel		1.mga6
+
+# where to build
+%define		topdir		${RPM_BUILD_DIR}/%{name}-%{_arch}
+
+# source package
+Name:		kmod-%{drvname}
+Version:	%{drvver}
+Release:	@DISTREL@%{?dist}
+Summary:	Prebuilt %{drvname} modules for kernel-%{kernver}-%{kernrel}
+License:	GPLv2
+URL:		http://www.virtualbox.org/
+Group:		System/Kernel and hardware
+ExclusiveArch:	%{ix86} x86_64
+
+BuildRequires:	dkms-%{drvname} = %{drvver}-%{drvrel}
+%ifarch %{ix86}
+BuildRequires:	kernel-desktop586-devel-%{kernver}-%{kernrel}
+%endif
+BuildRequires:	kernel-desktop-devel-%{kernver}-%{kernrel}
+BuildRequires:	kernel-server-devel-%{kernver}-%{kernrel}
+
+%description
+This package creates prebuilt %{drvname} kernel modules for core kernel.
+
+
+# obsoletes prebuilt -netbook-latest modules with matching -desktop-latest
+%define latest_obsoletes_desktop %{drvname}-kernel-netbook-latest < 4.2.4-2
+%define latest_provides_desktop  %{drvname}-kernel-netbook-latest = %{drvver}-%{release}
+
+##### mkflavour() ala core kernel #####
+%define mkflavour()								\
+%package -n %{drvname}-kernel-%{kernver}-%{1}-%{kernrel}			\
+Summary:	%{drvname} driver for kernel-%{1}-%{kernver}-%{kernrel}		\
+License:	GPLv1								\
+URL:		http://www.virtualbox.org/					\
+Group:		System/Kernel and hardware					\
+Provides:	kmod(vboxdrv.ko) = %{version}					\
+Requires(post): dkms-minimal							\
+Requires(preun): dkms-minimal							\
+Requires:	kernel-%{1}-%{kernver}-%{kernrel}				\
+Requires(post):	kernel-%{1}-%{kernver}-%{kernrel}				\
+Requires(preun): kernel-%{1}-%{kernver}-%{kernrel}				\
+Recommends:	%{drvname}-kernel-%{1}-latest					\
+%ifarch %{ix86}									\
+Conflicts:	arch(x86_64)							\
+%endif										\
+										\
+%description -n %{drvname}-kernel-%{kernver}-%{1}-%{kernrel}			\
+Prebuilt dkms binary kernel modules for the %{drvname} driver version %{drvver} \
+built for kernel-%{1}-%{kernver}-%{kernrel}.					\
+										\
+%files -n %{drvname}-kernel-%{kernver}-%{1}-%{kernrel}				\
+%dir /var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}/%{kernver}-%{1}-%{kernrel} \
+/var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}/%{kernver}-%{1}-%{kernrel}/* \
+										\
+%posttrans -n %{drvname}-kernel-%{kernver}-%{1}-%{kernrel}				\
+%{_sbindir}/dkms install --binary -m %{drvname} -v %{drvver}-%{drvrel} -k %{kernver}-%{1}-%{kernrel} --rpm_safe_upgrade \
+%{_sbindir}/dkms status -m %{drvname} -v %{drvver}-%{drvrel}			\
+set -x										\
+%{_sbindir}/rmmod vboxpci &>/dev/null						\
+%{_sbindir}/rmmod vboxnetflt &>/dev/null					\
+%{_sbindir}/rmmod vboxnetadp &>/dev/null					\
+%{_sbindir}/rmmod vboxdrv &>/dev/null						\
+%{_sbindir}/modprobe vboxdrv &>/dev/null					\
+%{_sbindir}/modprobe vboxnetflt &>/dev/null					\
+%{_sbindir}/modprobe vboxnetadp &>/dev/null					\
+%{_sbindir}/modprobe vboxpci &>/dev/null					\
+:										\
+										\
+%preun -n %{drvname}-kernel-%{kernver}-%{1}-%{kernrel}				\
+%{_sbindir}/dkms uninstall --binary -m %{drvname} -v %{drvver}-%{drvrel} -k %{kernver}-%{1}-%{kernrel} --rpm_safe_upgrade \
+										\
+										\
+%package -n %{drvname}-kernel-%{1}-latest					\
+Summary:	Virtual rpm for latest %{drvname}-kernel-%{1} driver		\
+License:	GPLv2								\
+URL:		http://www.virtualbox.org/					\
+Group:		System/Kernel and hardware					\
+Requires:	%{drvname}-kernel-%{kernver}-%{1}-%{kernrel} = %{version}-%{release} \
+%{expand:%%{?latest_obsoletes_%{1}:Obsoletes: %{latest_obsoletes_%{1}}}}	\
+%{expand:%%{?latest_provides_%{1}:Provides: %{latest_provides_%{1}}}}		\
+%ifarch %{ix86}									\
+Conflicts:	arch(x86_64)							\
+%endif										\
+										\
+%description -n %{drvname}-kernel-%{1}-latest					\
+This package is a virtual rpm that aims to make sure you always have the	\
+latest prebuilt %{drvname} driver for kernel-%{1}.				\
+										\
+%files -n %{drvname}-kernel-%{1}-latest
+
+%ifarch %{ix86}
+%mkflavour desktop586
+%endif
+
+%mkflavour desktop
+%mkflavour server
+
+
+%prep
+rm -rf %{topdir}
+
+%build
+%{_sbindir}/dkms add -m %{drvname} -v %{drvver}-%{drvrel} --dkmstree %{topdir}/var/lib/dkms-binary
+%ifarch %{ix86}
+%{_sbindir}/dkms build --no-prepare-kernel --no-clean-kernel -m %{drvname} -v %{drvver}-%{drvrel} \
+	    -k %{kernver}-desktop586-%{kernrel} --kernelsourcedir /usr/src/kernel-%{kernver}-desktop586-%{kernrel} \
+	    --dkmstree %{topdir}/var/lib/dkms-binary
+%endif
+for flavour in desktop server; do
+    %{_sbindir}/dkms build --no-prepare-kernel --no-clean-kernel -m %{drvname} -v %{drvver}-%{drvrel} \
+		-k %{kernver}-$flavour-%{kernrel} --kernelsourcedir /usr/src/kernel-%{kernver}-$flavour-%{kernrel} \
+		--dkmstree %{topdir}/var/lib/dkms-binary
+done
+
+%install
+mkdir -p %{buildroot}/var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}
+cp -a %{topdir}/var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}/%{kernver}-*-%{kernrel} \
+      %{buildroot}/var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}/
+for dir in %{buildroot}/var/lib/dkms-binary/%{drvname}/%{drvver}-%{drvrel}/%{kernver}-*-%{kernrel}; do
+    cp -a /usr/src/%{drvname}-%{drvver}-%{drvrel}/dkms.conf $dir/
+    xz -6e $dir/*/module/vbox*.ko ||:
+done

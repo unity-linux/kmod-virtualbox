@@ -1,7 +1,8 @@
 NAME=kmod-virtualbox
-DISTREL=4
 VERSION=5.1.28
 KERNVER=4.12.14
+VBOXREL=2
+DISTREL=4
 
 RPMBUILD=$(shell which rpmbuild)
 CAT=$(shell which cat)
@@ -15,6 +16,7 @@ $(NAME).spec: $(NAME).spec.in
 	@$(CAT) $(NAME).spec.in | \
 		$(SED) -e 's,@VERSION@,$(VERSION),g' | \
 		$(SED) -e 's,@KERNVER@,$(KERNVER),g' | \
+		$(SED) -e 's,@VBOXREL@,$(DISTREL),g' | \
 		$(SED) -e 's,@DISTREL@,$(DISTREL),g' \
 			>$(NAME).spec
 	@echo

@@ -1,7 +1,7 @@
 # define driver name, version and release
 %define		drvname	virtualbox
 %define		drvver	@VERSION@
-%define		drvrel	1.mga6
+%define		drvrel	@VBOXREL@.mga6
 
 # define core kernel version we build against
 %define 	kernver		@KERNVER@

@@ -101,7 +101,6 @@ latest prebuilt %{drvname} driver for kernel-%{1}.				\
 %endif
 
 %mkflavour desktop
-%mkflavour server
 
 
 %prep
@@ -114,7 +113,7 @@ rm -rf %{topdir}
 	    -k %{kernver}-desktop586-%{kernrel} --kernelsourcedir /usr/src/kernel-%{kernver}-desktop586-%{kernrel} \
 	    --dkmstree %{topdir}/var/lib/dkms-binary
 %endif
-for flavour in desktop server; do
+for flavour in desktop; do
     %{_sbindir}/dkms build --no-prepare-kernel --no-clean-kernel -m %{drvname} -v %{drvver}-%{drvrel} \
 		-k %{kernver}-$flavour-%{kernrel} --kernelsourcedir /usr/src/kernel-%{kernver}-$flavour-%{kernrel} \
 		--dkmstree %{topdir}/var/lib/dkms-binary

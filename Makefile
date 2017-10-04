@@ -1,4 +1,4 @@
-NAME=kmod-vboxadditions
+NAME=kmod-virtualbox
 DISTREL=4
 VERSION=5.1.28
 KERNVER=4.12.14

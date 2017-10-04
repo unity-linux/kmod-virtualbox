@@ -2,7 +2,7 @@ NAME=kmod-virtualbox
 VERSION=5.1.28
 KERNVER=4.12.14
 VBOXREL=2
-DISTREL=4
+DISTREL=2
 
 RPMBUILD=$(shell which rpmbuild)
 CAT=$(shell which cat)

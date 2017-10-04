@@ -22,10 +22,9 @@ ExclusiveArch:	%{ix86} x86_64
 
 BuildRequires:	dkms-%{drvname} = %{drvver}-%{drvrel}
 %ifarch %{ix86}
-BuildRequires:	kernel-desktop586-devel-%{kernver}-%{kernrel}
+BuildRequires:	kernel-unity-desktop586-devel-%{kernver}-%{kernrel}
 %endif
-BuildRequires:	kernel-desktop-devel-%{kernver}-%{kernrel}
-BuildRequires:	kernel-server-devel-%{kernver}-%{kernrel}
+BuildRequires:	kernel-unity-desktop-devel-%{kernver}-%{kernrel}
 
 %description
 This package creates prebuilt %{drvname} kernel modules for core kernel.
